@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="create_run_jar" name="Create Runnable Jar for Project miot.relay with libraries in sub-folder">
+    <!--this file was created by Eclipse Runnable JAR Export Wizard-->
+    <!--ANT 1.7 is required                                        -->
+    <!--define folder properties-->
+    <property name="dir.buildfile" value="."/>
+    <property name="dir.workspace" value="${dir.buildfile}/.."/>
+    <property name="dir.jarfile" value="${dir.buildfile}/deploy"/>
+	<property name="remote.dir" value="javaapps/miot.relay"/>
+	
+	<!-- Property file with remote access information -->
+	<property file="deploy.properties"/>
+	
+    <target name="create_run_jar">
+    	<echo>"Deploy application to jar file with libraries to ${dir.jarfile}"</echo>
+        <jar destfile="${dir.jarfile}/miot.relay.jar">
+            <manifest>
+                <attribute name="Main-Class" value="cz.miot.main.MainClass"/>
+                <attribute name="Class-Path" value=". miot.relay_lib/org.eclipse.paho.client.mqttv3-1.1.0.jar miot.relay_lib/pi4j-core.jar miot.relay_lib/log4j-api-2.8.1.jar miot.relay_lib/log4j-core-2.8.1.jar"/>
+            </manifest>
+            <fileset dir="${dir.buildfile}/bin"/>
+        </jar>
+        <delete dir="${dir.jarfile}/miot.relay_lib"/>
+        <mkdir dir="${dir.jarfile}/miot.relay_lib"/>
+        <copy file="${dir.workspace}/library/org.eclipse.paho.client.mqttv3-1.1.0.jar" todir="${dir.jarfile}/miot.relay_lib"/>
+        <copy file="${dir.workspace}/library/pi4j-1.1/lib/pi4j-core.jar" todir="${dir.jarfile}/miot.relay_lib"/>
+    	<copy file="${dir.workspace}/library/apache-log4j-2.8.1-bin/log4j-api-2.8.1.jar" todir="${dir.jarfile}/miot.relay_lib"/>
+    	<copy file="${dir.workspace}/library/apache-log4j-2.8.1-bin/log4j-core-2.8.1.jar" todir="${dir.jarfile}/miot.relay_lib"/>
+    	<copy file="${dir.buildfile}/resources/log4j2.properties" todir="${dir.jarfile}"/>
+    </target>
+	
+	<target name="copy_to_rpi" depends="create_run_jar">
+		<echo>"Deploy jar file to remote raspberry Pi: ${remote.host}"</echo>
+		<sshexec command="rm -rf /home/${remote.user}/${remote.dir}" host="${remote.host}" username="${remote.user}" password="${remote.user.psw}" failonerror="true" trust="true"/>
+		<sshexec command="mkdir /home/${remote.user}/${remote.dir}" host="${remote.host}" username="${remote.user}" password="${remote.user.psw}" failonerror="true" trust="true"/>
+		<scp todir="${remote.user}:${remote.user.psw}@${remote.host}:${remote.dir}" trust="true">
+			<fileset dir="${dir.jarfile}"/>
+		</scp>		
+	</target>
+</project>
